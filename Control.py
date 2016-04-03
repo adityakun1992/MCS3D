@@ -4,7 +4,6 @@ from PyDAQmx import *
 from subprocess import Popen
 from DesignSimulation import design
 
-import matplotlib
 def ExitIfError(st):
     if st != SA_OK:
         handle_error(st)
