@@ -12,7 +12,7 @@ def ExitIfError(st):
         #raise Exception(st)
         #exit(1)
 
-
+print "xyz"
 
 
 class SmarAct:
