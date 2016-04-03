@@ -9,10 +9,6 @@ def ExitIfError(st):
         handle_error(st)
     else:
         print "Connectection Successful"
-        #raise Exception(st)
-        #exit(1)
-
-print "xyz"
 
 
 class SmarAct:
@@ -33,19 +29,6 @@ class SmarAct:
         self.moving = 0
         #print MCSlib.SA_GetPosition_S(self.mcsHandle,0,byref(self.y))
         ExitIfError(MCSlib.SA_InitSystems(config))
-        trys=0
-        """while trys<10:
-            try:
-                if MCSlib.SA_GetPosition_S(self.mcsHandle,0,byref(self.y))==5:
-                    raise
-                if MCSlib.SA_GetPosition_S(self.mcsHandle,1,byref(self.x))==5:
-                    raise
-            except:
-                trys+=1
-                self.reconnect()
-                ExitIfError(MCSlib.SA_InitSystems(config))
-                continue
-            break"""
         #initialize the NI-DAQmx
         try:
             self.taskHandle = TaskHandle()
@@ -104,18 +87,6 @@ class SmarAct:
     def getStatus(self):
         MCSlib.SA_GetStatus_S(self.mcsHandle,0,byref(self.statusy))
         MCSlib.SA_GetStatus_S(self.mcsHandle,1,byref(self.statusx))
-        """trys=0
-        while trys<10:
-            try:
-                if MCSlib.SA_GetStatus_S(self.mcsHandle,0,byref(self.statusy))==5:
-                    raise
-                if MCSlib.SA_GetStatus_S(self.mcsHandle,1,byref(self.statusx))==5:
-                    raise
-            except:
-                trys += 1
-                self.reconnect()
-                continue
-            break"""
         #print self.statusx.value, self.statusy.value
         return [self.statusx.value, self.statusy.value]
     
@@ -141,19 +112,6 @@ class SmarAct:
     def getPosition(self):
         #buffsize=c_int(10)
         #ExitIfError(MCSlib.SA_InitSystems(0))
-        trys=0
-        """while trys<10:
-            try:
-                if MCSlib.SA_GetPosition_S(self.mcsHandle,0,byref(self.y))==5:
-                    raise
-                if MCSlib.SA_GetPosition_S(self.mcsHandle,1,byref(self.x))==5:
-                    raise
-            except:
-                trys+=1
-                self.reconnect()
-                continue
-            break
-        #MCSlib.SA_ReleaseSystems(byref(buffsize))"""
         MCSlib.SA_GetPosition_S(self.mcsHandle,0,byref(self.y))
         MCSlib.SA_GetPosition_S(self.mcsHandle,1,byref(self.x))
         return [self.x.value, self.y.value]
@@ -182,22 +140,32 @@ class SmarAct:
         plt.show()"""
 
     def moveRelative(self, xpos, ypos):
-        self.dx, self.dy = xpos, ypos
-        MCSlib.SA_GotoPositionRelative_S(self.mcsHandle, 1, xpos, 60000)
-        MCSlib.SA_GotoPositionRelative_S(self.mcsHandle, 0, ypos, 60000)
+        self.dx, self.dy = self.dx+xpos, self.dy+ypos
         #self.moving = 1
-        """trys=0
-        while trys<10:
+        reached =0
+        while True:
             try:
-                if MCSlib.SA_GotoPositionRelative_S(self.mcsHandle, 0, ypos, 60000)==5:
-                    raise
-                if MCSlib.SA_GotoPositionRelative_S(self.mcsHandle, 1, xpos, 60000)==5:
-                    raise
+                MCSlib.SA_GotoPositionRelative_S(self.mcsHandle, 1, xpos, 60000)
+                MCSlib.SA_GotoPositionRelative_S(self.mcsHandle, 0, ypos, 60000)
+                history=[]
+                while True:
+                    self.getStatus()
+                    #print self.getPosition(),self.getStatus(),"xyz"
+                    history.extend([self.getPosition()])
+                    if len(history)>20:
+                        #print history
+                        if ((not history or [history[0]]*len(history) == history)):
+                            del history
+                            raise
+                        history=[]
+                    if self.statusx.value == 3 and self.statusy.value == 3:
+                        reached = 1
+                        break
+                break
             except:
-                trys+=1
                 self.reconnect()
-                continue
-            break"""
+        print "done"
+        self.dx, self.dy = xpos, ypos
         #self.wait()
 
     def move(self, xpos=-6500000, ypos=44000000):
@@ -226,21 +194,7 @@ class SmarAct:
                 self.reconnect()
         print "done"
         self.dx, self.dy = xpos, ypos
-        self.wait()
-        """trys=0
-        while trys<10:
-            try:
-                if MCSlib.SA_GotoPositionAbsolute_S(self.mcsHandle,0,ypos,60000)==5:
-                    raise
-                if MCSlib.SA_GotoPositionAbsolute_S(self.mcsHandle,1,xpos,60000)==5:
-                    raise
-            except:
-                trys+=1
-                self.reconnect()
-                continue
-            break
-        if trys>0:
-            print "Reconnected"""
+        #self.wait()
         #self.moveflag = 1
 
 
@@ -329,25 +283,3 @@ class SmarAct:
         DAQmxClearTask(self.taskHandle_x)
         DAQmxStopTask(self.taskHandle_y)
         DAQmxClearTask(self.taskHandle_y)
-
-"""mcsHandle = SA_INDEX()
-config = 0
-x = c_int()
-y = c_int()
-moveinProgress = 0
-Stopped = 0
-Holding = 0
-stageError = 0
-status_command_dictionary = {0:'Stopped', 1:'Stepping', 2:'Scanning', 3:'Holding', 4:'Target',
-                             5:'Move Delay', 6:'Calibrating', 6:'Target', 7:'Finding Ref', 8:'Opening'}
-statusy=c_uint()
-statusx=c_uint()
-printing = 0
-moving = 0
-ExitIfError(MCSlib.SA_InitSystems(config))
-MCSlib.SA_GetPosition_S(mcsHandle,0,byref(y))
-MCSlib.SA_GetPosition_S(mcsHandle,1,byref(x))
-MCSlib.SA_GotoPositionAbsolute_S(mcsHandle,0,0,60000)
-MCSlib.SA_GotoPositionAbsolute_S(mcsHandle,1,0,60000)
-buffsize=c_int(10)
-MCSlib.SA_ReleaseSystems(byref(buffsize))"""
