@@ -23,6 +23,7 @@ series = design()
 class Application(Frame):
     def __init__(self, master=None):
         self.fig = plt.figure(figsize=(3,2.6))
+        self.history=[]
         Frame.__init__(self, master)
         self.origin_x = 0
         self.origin_y = 0
@@ -212,6 +213,11 @@ class Application(Frame):
 
     def _update_plot(self, i):
         while True:
+            """self.history.extend([self.getPosition()])
+            if len(self.history)>=20:
+                if ((not history or [history[0]]*len(history) == history)):
+                    del history
+                    stage.reconnect()"""
             self.x, self.y = stage.getPosition()[0], stage.getPosition()[1]
             #print self.x,self.y
             #self.x, self.y = stage.getPosition()[0], stage.getPosition()[1]

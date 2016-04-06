@@ -45,3 +45,21 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+*.pyc
+Constant_list.dat
+.idea/encodings.xml
+.idea/.name
+.idea/misc.xml
+.idea/workspace.xml
+.idea/MCS3D.iml
+.idea/modules.xml
+.idea/vcs.xml
+ExposureFiles/Plus.txt
+ExposureFiles/xyz.txt
+ExposureFiles/Pluses.txt
+TrackStage.py
+Testseries.py
+trackintk.py
+Scripts/Pluses_smaract.py
+multithread.py
+digitaldaqtest.py

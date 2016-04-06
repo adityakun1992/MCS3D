@@ -14,6 +14,7 @@ def ExitIfError(st):
 class SmarAct:
     def __init__(self, config):
         self.mcsHandle = SA_INDEX()
+        self.reconnecting = False
         self.config = config
         self.x = c_int()
         self.y = c_int()
@@ -27,6 +28,7 @@ class SmarAct:
         self.statusx=c_uint()
         self.printing = 0
         self.moving = 0
+        self.dosage=[]
         #print MCSlib.SA_GetPosition_S(self.mcsHandle,0,byref(self.y))
         ExitIfError(MCSlib.SA_InitSystems(config))
         #initialize the NI-DAQmx
@@ -67,6 +69,7 @@ class SmarAct:
         ExitIfError(MCSlib.SA_InitSystems(self.config))
 
     def reconnect(self):
+        self.reconnecting = True
         p = Popen("restartcom.bat")
         time.sleep(5)
         ExitIfError(MCSlib.SA_InitSystems(self.config))
@@ -164,7 +167,7 @@ class SmarAct:
                 break
             except:
                 self.reconnect()
-        print "done"
+        self.statusx.value=self.statusy.value=0
         self.dx, self.dy = xpos, ypos
         #self.wait()
 
@@ -251,10 +254,15 @@ class SmarAct:
             """
 
     def printSeries(self,series,dosage):
+        i=0
         for item in series:
+            print "Now moving to :" + " " + str(item)
             self.move(item[0],item[1])
-            self.wait()
-            self.expose_manual(dosage)
+            print "Reached"
+            #self.wait()
+            print "Exposing for " + str(dosage[i]) + " seconds"
+            self.expose_manual(self.dosage[i])
+            i+=1
             """for point in series:
                 self.flex_move(point[0], point[1])
                 self.wait()
