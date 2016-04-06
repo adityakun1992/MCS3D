@@ -195,6 +195,7 @@ class SmarAct:
             except:
                 self.reconnect()
         print "done"
+        self.statusx.value=self.statusy.value=0
         self.dx, self.dy = xpos, ypos
         #self.wait()
         #self.moveflag = 1
