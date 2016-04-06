@@ -28,7 +28,6 @@ class SmarAct:
         self.statusx=c_uint()
         self.printing = 0
         self.moving = 0
-        self.dosage=[]
         #print MCSlib.SA_GetPosition_S(self.mcsHandle,0,byref(self.y))
         ExitIfError(MCSlib.SA_InitSystems(config))
         #initialize the NI-DAQmx
@@ -261,7 +260,7 @@ class SmarAct:
             print "Reached"
             #self.wait()
             print "Exposing for " + str(dosage[i]) + " seconds"
-            self.expose_manual(self.dosage[i])
+            self.expose_manual(dosage[i])
             i+=1
             """for point in series:
                 self.flex_move(point[0], point[1])
