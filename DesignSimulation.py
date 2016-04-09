@@ -6,6 +6,8 @@ class design:
     def __init__(self):
         self.file_path=os.path.dirname(os.path.realpath(__file__)) + '/ExposureFiles/'
         self.wafer_size = None
+        self.exposure_points=[]
+        self.dosage=[]
         self.origin = [0,0]
     
     def name(self, name):
@@ -21,16 +23,21 @@ class design:
 
 
     def gengrid(self, pitch_x, pitch_y):
-        i = 0
-        j = 0
+        i = self.mask[1]*1000000
+        j = self.mask[3]*1000000
+        print i, j
         self.grid = []
-        while i*pitch_x < self.sample_size[0] or i*pitch_x<250000000:
-            while j*pitch_y < self.sample_size[1] or j*pitch_y<300000000:
-                self.grid.append([i*pitch_x, j*pitch_y])
-                j += 1
-            i += 1
-            j = 0
-        self.exposure_points=self.grid
+        while i < 0:
+            while j < 0:
+                self.grid.append([i, j])
+                self.grid.append([-i, j])
+                self.grid.append([i, -j])
+                self.grid.append([-i, -j])
+                j += (pitch_x*1000000)
+            i += (pitch_y*1000000)
+            j = self.mask[3]*1000000
+        self.exposure_points.extend(self.grid)
+        print self.exposure_points
 
 
 
@@ -54,18 +61,20 @@ class design:
         fig = plt.figure(2)
         fig.canvas.set_window_title('Preview Window')
         plt.figure(2)
-        if self.sample_size:
-            plt.plot([self.sample_size[0]/2,self.sample_size[0]/2],[self.sample_size[1]/2,-self.sample_size[1]/2], 'black')
-            plt.plot([self.sample_size[0]/2,-self.sample_size[0]/2],[-self.sample_size[1]/2,-self.sample_size[1]/2], 'black')
-            plt.plot([-self.sample_size[0]/2,-self.sample_size[0]/2],[-self.sample_size[1]/2,self.sample_size[1]/2], 'black')
-            plt.plot([-self.sample_size[0]/2,self.sample_size[0]/2],[self.sample_size[1]/2,self.sample_size[1]/2], 'black')
+        if self.mask:
+            plt.plot([self.mask[0],self.mask[0]],[self.mask[2],self.mask[3]], 'black')
+            plt.plot([self.mask[0],self.mask[1]],[self.mask[3],self.mask[3]], 'black')
+            plt.plot([self.mask[1],self.mask[1]],[self.mask[3],self.mask[2]], 'black')
+            plt.plot([self.mask[1],self.mask[0]],[self.mask[2],self.mask[2]], 'black')
+
         xdata,ydata=[],[]
         #print self.exposure_points
         for item in self.exposure_points:
             xdata.append(item[0]/float(1000000))
             ydata.append(item[1]/float(1000000))
         plt.plot(xdata,ydata,'ro')
-        plt.axis([-50, 50, -60, 60])
+        #plt.axis()
+        plt.axis([-50, 50, -60, 60],'equal')
         plt.grid()
         plt.show()
      
@@ -76,11 +85,11 @@ class design:
                 self.writeData()"""
     
     
-    def wafer(self, x, y):
-        self.sample_size = [x, y]
+    def masking(self, x, y):
+        self.mask = [(x/2)+self.origin[0],(-x/2)+self.origin[0], (y/2)+self.origin[1],(-y/2)+self.origin[1]]
         
     def setOrigin(self, x, y):
-        self.origin = [x, y]
+        self.origin = [x,y]
         
     def relativeOrigin(self, x, y):
         self.origin = [self.origin[0]+x, self.origin[1]+y]
