@@ -23,19 +23,20 @@ class design:
 
 
     def gengrid(self, pitch_x, pitch_y):
-        i = self.mask[1]*1000000
-        j = self.mask[3]*1000000
+        i = (self.mask[1])*1000000
+        j = (self.mask[3])*1000000
         print i, j
+        print "Origin="+str(self.origin)
         self.grid = []
         while i < 0:
             while j < 0:
-                self.grid.append([i, j])
-                self.grid.append([-i, j])
-                self.grid.append([i, -j])
-                self.grid.append([-i, -j])
+                self.grid.append([i+(self.origin[0]*1000000), j+(self.origin[1]*1000000)])
+                self.grid.append([i+(self.origin[0]*1000000), -j+(self.origin[1]*1000000)])
+                self.grid.append([-i+(self.origin[0]*1000000), -j+(self.origin[0]*1000000)])
+                self.grid.append([-i+(self.origin[0]*1000000), j+(self.origin[0]*1000000)])
                 j += (pitch_x*1000000)
             i += (pitch_y*1000000)
-            j = self.mask[3]*1000000
+            j = (self.mask[3])*1000000
         self.exposure_points.extend(self.grid)
         print self.exposure_points
 
@@ -62,10 +63,10 @@ class design:
         fig.canvas.set_window_title('Preview Window')
         plt.figure(2)
         if self.mask:
-            plt.plot([self.mask[0],self.mask[0]],[self.mask[2],self.mask[3]], 'black')
-            plt.plot([self.mask[0],self.mask[1]],[self.mask[3],self.mask[3]], 'black')
-            plt.plot([self.mask[1],self.mask[1]],[self.mask[3],self.mask[2]], 'black')
-            plt.plot([self.mask[1],self.mask[0]],[self.mask[2],self.mask[2]], 'black')
+            plt.plot([self.mask[0]+self.origin[0],self.mask[0]+self.origin[0]],[self.mask[2]+self.origin[1],self.mask[3]+self.origin[1]], 'black')
+            plt.plot([self.mask[0]+self.origin[0],self.mask[1]+self.origin[0]],[self.mask[3]+self.origin[1],self.mask[3]+self.origin[1]], 'black')
+            plt.plot([self.mask[1]+self.origin[0],self.mask[1]+self.origin[0]],[self.mask[3]+self.origin[1],self.mask[2]+self.origin[1]], 'black')
+            plt.plot([self.mask[1]+self.origin[0],self.mask[0]+self.origin[0]],[self.mask[2]+self.origin[1],self.mask[2]+self.origin[1]], 'black')
 
         xdata,ydata=[],[]
         #print self.exposure_points
@@ -86,7 +87,8 @@ class design:
     
     
     def masking(self, x, y):
-        self.mask = [(x/2)+self.origin[0],(-x/2)+self.origin[0], (y/2)+self.origin[1],(-y/2)+self.origin[1]]
+        self.mask = [(x/2),(-x/2), (y/2),(-y/2)]
+        print "Mask="+str(self.mask)
         
     def setOrigin(self, x, y):
         self.origin = [x,y]
