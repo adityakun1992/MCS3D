@@ -1,11 +1,17 @@
 import os, re
+import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.path as mpath
+import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
+from matplotlib.collections import PatchCollection
+import math
 
 
 class design:
     def __init__(self):
         self.file_path=os.path.dirname(os.path.realpath(__file__)) + '/ExposureFiles/'
-        self.wafer_size = None
+        self.mask = None
         self.exposure_points=[]
         self.dosage=[]
         self.origin = [0,0]
@@ -32,8 +38,8 @@ class design:
             while j < 0:
                 self.grid.append([i+(self.origin[0]*1000000), j+(self.origin[1]*1000000)])
                 self.grid.append([i+(self.origin[0]*1000000), -j+(self.origin[1]*1000000)])
-                self.grid.append([-i+(self.origin[0]*1000000), -j+(self.origin[0]*1000000)])
-                self.grid.append([-i+(self.origin[0]*1000000), j+(self.origin[0]*1000000)])
+                self.grid.append([-i+(self.origin[0]*1000000), -j+(self.origin[1]*1000000)])
+                self.grid.append([-i+(self.origin[0]*1000000), j+(self.origin[1]*1000000)])
                 j += (pitch_x*1000000)
             i += (pitch_y*1000000)
             j = (self.mask[3])*1000000
@@ -58,6 +64,26 @@ class design:
         exposurefile.close()
 
 
+    def circle(self,r,n):
+        circle = mpatches.Circle(grid[0], 0.1, ec="none")
+        patches.append(circle)
+        label(grid[0], "Circle")
+        # r=r*1000000
+        # perimeter=[(math.cos(2*math.pi/n*x)*r+self.origin[0],math.sin(2*math.pi/n*x)*r+self.origin[1]) for x in xrange(0,(n*2))]
+        # self.exposure_points.extend(perimeter)
+        # for item in perimeter:
+        #     print str(item)
+
+
+    def disc(self,r,n):
+        r=r*1000000
+        perimeter=[(math.cos(2*math.pi/n*x)*r+self.origin[0],math.sin(2*math.pi/n*x)*r+self.origin[1]) for x in xrange(0,(n*2))]
+        self.exposure_points.extend(perimeter)
+        for item in perimeter:
+            print str(item)
+
+
+
     def preview(self):
         fig = plt.figure(2)
         fig.canvas.set_window_title('Preview Window')
@@ -73,7 +99,8 @@ class design:
         for item in self.exposure_points:
             xdata.append(item[0]/float(1000000))
             ydata.append(item[1]/float(1000000))
-        plt.plot(xdata,ydata,'ro')
+        plt.plot(xdata,ydata,'ro',self.origin[0],self.origin[1],'bs')
+        #plt.plot()
         #plt.axis()
         plt.axis([-50, 50, -60, 60],'equal')
         plt.grid()

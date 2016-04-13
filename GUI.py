@@ -87,8 +87,11 @@ class Application(Frame):
         y = self.gotoY.get("1.0",END)
         stage.move(x*1000000,y*1000000)
 
-    def print_manual(self):
-        stage.expose_manual(1)
+    def beam_on(self):
+        stage.expose_on()
+
+    def beam_off(self):
+        stage.expose_off()
 
 
     def asksaveasfilename(self):
@@ -180,14 +183,18 @@ class Application(Frame):
         self.goto.place(x = 960, y=47, bordermode=OUTSIDE)
 
         #manual print
-        self.print_label = Label(root, text="Print Time:")
+        """self.print_label = Label(root, text="Print Time:")
         self.print_label.pack()
         self.print_label.place(x = 770, y=80, bordermode=OUTSIDE)
         self.print_text = Text(root, height=1, width=6)
-        self.print_text.place(x=840, y=80)
-        self.expose = Button(root, text ="Print", command = self.print_manual)
-        self.expose.pack()
-        self.expose.place(x = 960, y=80, bordermode=OUTSIDE)
+        self.print_text.place(x=840, y=80)"""
+        self.expose_on = Button(root, text ="Beam On", command = self.beam_on)
+        self.expose_on.pack()
+        self.expose_on.place(x = 840, y=100, bordermode=OUTSIDE)
+
+        self.expose_off = Button(root, text ="Beam Off", command = self.beam_off)
+        self.expose_off.pack()
+        self.expose_off.place(x = 920, y=100, bordermode=OUTSIDE)
 
         self.QUIT = Button(root, text ="Stop", command = self.quit)
         self.QUIT.place(x = 20, y=390, bordermode=OUTSIDE)
