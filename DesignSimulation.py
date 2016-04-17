@@ -29,22 +29,48 @@ class design:
 
 
     def gengrid(self, pitch_x, pitch_y):
-        i = (self.mask[1])*1000000
-        j = (self.mask[3])*1000000
-        print i, j
-        print "Origin="+str(self.origin)
         self.grid = []
-        while i < 0:
-            while j < 0:
-                self.grid.append([i+(self.origin[0]*1000000), j+(self.origin[1]*1000000)])
-                self.grid.append([i+(self.origin[0]*1000000), -j+(self.origin[1]*1000000)])
-                self.grid.append([-i+(self.origin[0]*1000000), -j+(self.origin[1]*1000000)])
-                self.grid.append([-i+(self.origin[0]*1000000), j+(self.origin[1]*1000000)])
-                j += (pitch_x*1000000)
-            i += (pitch_y*1000000)
+        unique=[]
+        if len(self.mask)==4:
+            i = (self.mask[1])*1000000
             j = (self.mask[3])*1000000
-        self.exposure_points.extend(self.grid)
-        print self.exposure_points
+            while i <= 0:
+                while j <= 0:
+                    self.grid.append([i+(self.origin[0]*1000000), j+(self.origin[1]*1000000)])
+                    self.grid.append([i+(self.origin[0]*1000000), -j+(self.origin[1]*1000000)])
+                    self.grid.append([-i+(self.origin[0]*1000000), -j+(self.origin[1]*1000000)])
+                    self.grid.append([-i+(self.origin[0]*1000000), j+(self.origin[1]*1000000)])
+                    j += (pitch_x*1000000)
+                i += (pitch_y*1000000)
+                j = (self.mask[3])*1000000
+            #unique[:]=[x for x in self.grid if x not in unique]
+            #self.grid = unique
+            self.exposure_points.extend(self.grid)
+        elif(len(self.mask)==1):
+            i = -50*1000000
+            j = -60*1000000
+
+            while i <= 0:
+                while j <= 0:
+                    self.grid.append([i+(self.origin[0]*1000000), j+(self.origin[1]*1000000)])
+                    self.grid.append([i+(self.origin[0]*1000000), -j+(self.origin[1]*1000000)])
+                    self.grid.append([-i+(self.origin[0]*1000000), -j+(self.origin[1]*1000000)])
+                    self.grid.append([-i+(self.origin[0]*1000000), j+(self.origin[1]*1000000)])
+                    j += (pitch_x*1000000)
+                i += (pitch_y*1000000)
+                j = -60*1000000
+
+            #unique[:]=[x for x in self.grid if x not in unique]
+            #self.grid = unique
+            #for item in self.grid:
+                #print str(item)+ "\t"+str(math.sqrt(((item[0]-self.origin[0]*1000000)**2)  +  ((item[1]-self.origin[1]*1000000)**2)  ))+"\t" +str(math.sqrt(((item[0]-self.origin[0]*1000000)**2)  +  ((item[1]-self.origin[1]*1000000)**2)  ) >= (self.mask[0]*1000000))
+                #if (math.sqrt(((X[0]-self.origin[0]*1000000)**2)  +  ((X[1]-self.origin[1]*1000000)**2)  ) > (self.mask[0]*1000000)):
+            self.grid[:] = [x for x in self.grid if (math.sqrt(((x[0]-self.origin[0]*1000000)**2)  +  ((x[1]-self.origin[1]*1000000)**2)  ) <= (self.mask[0]*1000000))]
+            for item in self.grid:
+                if self.grid.count(item)>1:
+                    print "xyz"
+            self.exposure_points.extend(self.grid)
+            #print self.exposure_points
 
 
 
@@ -88,11 +114,11 @@ class design:
         fig = plt.figure(2)
         fig.canvas.set_window_title('Preview Window')
         plt.figure(2)
-        if self.mask:
+        """if self.mask:
             plt.plot([self.mask[0]+self.origin[0],self.mask[0]+self.origin[0]],[self.mask[2]+self.origin[1],self.mask[3]+self.origin[1]], 'black')
             plt.plot([self.mask[0]+self.origin[0],self.mask[1]+self.origin[0]],[self.mask[3]+self.origin[1],self.mask[3]+self.origin[1]], 'black')
             plt.plot([self.mask[1]+self.origin[0],self.mask[1]+self.origin[0]],[self.mask[3]+self.origin[1],self.mask[2]+self.origin[1]], 'black')
-            plt.plot([self.mask[1]+self.origin[0],self.mask[0]+self.origin[0]],[self.mask[2]+self.origin[1],self.mask[2]+self.origin[1]], 'black')
+            plt.plot([self.mask[1]+self.origin[0],self.mask[0]+self.origin[0]],[self.mask[2]+self.origin[1],self.mask[2]+self.origin[1]], 'black')"""
 
         xdata,ydata=[],[]
         #print self.exposure_points
@@ -113,9 +139,11 @@ class design:
                 self.writeData()"""
     
     
-    def masking(self, x, y):
-        self.mask = [(x/2),(-x/2), (y/2),(-y/2)]
-        print "Mask="+str(self.mask)
+    def masking(self, x, y=None):
+        if y==None:
+            self.mask=[x]
+        else:
+            self.mask = [(x/2),(-x/2), (y/2),(-y/2)]
         
     def setOrigin(self, x, y):
         self.origin = [x,y]
