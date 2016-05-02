@@ -2,7 +2,6 @@ from Config import *
 import time
 from PyDAQmx import *
 from subprocess import Popen
-from DesignSimulation import design
 
 def ExitIfError(st):
     if st != SA_OK:
@@ -14,18 +13,20 @@ def ExitIfError(st):
 class SmarAct:
     def __init__(self, config):
         self.mcsHandle = SA_INDEX()
-        self.reconnecting = False
-        self.config = config
         self.x = c_int()
         self.y = c_int()
+        self.statusy=c_uint()
+        self.statusx=c_uint()
+
+
+        self.reconnecting = False
+        self.config = config
         self.moveinProgress = 0
         self.Stopped = 0
         self.Holding = 0
         self.stageError = 0
         self.status_command_dictionary = {0:'Stopped', 1:'Stepping', 2:'Scanning', 3:'Holding', 4:'Target', 
-                                          5:'Move Delay', 6:'Calibrating', 6:'Target', 7:'Finding Ref', 8:'Opening'}
-        self.statusy=c_uint()
-        self.statusx=c_uint()
+                                          5:'Move Delay', 6:'Calibrating', 7:'Finding Ref', 8:'Opening'}
         self.printing = 0
         self.moving = 0
         #print MCSlib.SA_GetPosition_S(self.mcsHandle,0,byref(self.y))
@@ -183,8 +184,7 @@ class SmarAct:
                     #print self.getPosition(),self.getStatus(),"xyz"
                     history.extend([self.getPosition()])
                     if len(history)>20:
-                        #print history
-                        if ((not history or [history[0]]*len(history) == history)):
+                        if ((not history or [history[0]]*len(history) == history)):   #if all history points are the same
                             del history
                             raise    
                         history=[]
@@ -193,12 +193,11 @@ class SmarAct:
                         break
                 break
             except:
+                #a disconnect has occured-need to reset USB
                 self.reconnect()
         print "done"
         self.statusx.value=self.statusy.value=0
         self.dx, self.dy = xpos, ypos
-        #self.wait()
-        #self.moveflag = 1
 
 
 

@@ -8,6 +8,8 @@ from Control import SmarAct
 from DesignSimulation import design
 import threading
 import Admin
+from numpy import *
+import itertools
 
 if not Admin.isUserAdmin():
         Admin.runAsAdmin()
@@ -252,45 +254,14 @@ root = Tk()
 root.geometry("1024x430")
 global app
 app = Application(master=root)
+def merge(x,y):
+    points=[]
+    for i,j in itertools.product(x,y):
+        points.append([i,j])
+    return points
 
 plt.close()
-"""def data_gen():
-    while True:
-        x, y =stage.getPosition()[0], stage.getPosition()[1]
-        app.updateCurrent(x, y)
-        yield x/1000000, y/1000000
 
-        #yield 0,0
-def run(data):
-    # update the data
-    xpos,ypos = data
-    xdata.append(xpos)
-    ydata.append(ypos)
-    xmin, xmax = ax.get_xlim()
-    line.set_data(xdata, ydata)
-    return line,"""
-
-"""def _update_plot(i, fig, scat):
-    print i,fig,scat
-    while True:
-        #x, y = stage.getPosition()[0], stage.getPosition()[1]
-        x, y = 0, 0
-        app.updateCurrent(x, y)
-        scat.set_offsets(([x/1000000,y/1000000]))
-        return scat,2
-"""
 #ani = animation.FuncAnimation(fig, run, data_gen, blit=True, interval=2, repeat=False)
 app.mainloop()
 root.destroy()
-
-
-
-
-
-"""def exec_process(text):
-    print "executing"
-    exec(text)
-if __name__ == '__main__':
-  p1 = Process(target=gui_process)
-  p1.start()
-  p1.join()"""

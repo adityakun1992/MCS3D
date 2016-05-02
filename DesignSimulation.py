@@ -11,10 +11,10 @@ import math
 class design:
     def __init__(self):
         self.file_path=os.path.dirname(os.path.realpath(__file__)) + '/ExposureFiles/'
-        self.mask = None
         self.exposure_points=[]
         self.dosage=[]
         self.origin = [0,0]
+        self.mask=None
     
     def name(self, name):
         self.name = name
@@ -31,9 +31,9 @@ class design:
     def gengrid(self, pitch_x, pitch_y):
         self.grid = []
         unique=[]
-        if len(self.mask)==4:
-            i = (self.mask[1])*1000000
-            j = (self.mask[3])*1000000
+        if len(self.wafer)==4:
+            i = (self.wafer[1])*1000000
+            j = (self.wafer[3])*1000000
             while i <= 0:
                 while j <= 0:
                     self.grid.append([i+(self.origin[0]*1000000), j+(self.origin[1]*1000000)])
@@ -42,11 +42,11 @@ class design:
                     self.grid.append([-i+(self.origin[0]*1000000), j+(self.origin[1]*1000000)])
                     j += (pitch_x*1000000)
                 i += (pitch_y*1000000)
-                j = (self.mask[3])*1000000
+                j = (self.wafer[3])*1000000
             #unique[:]=[x for x in self.grid if x not in unique]
             #self.grid = unique
             self.exposure_points.extend(self.grid)
-        elif(len(self.mask)==1):
+        elif(len(self.wafer)==1):
             i = -50*1000000
             j = -60*1000000
 
@@ -65,10 +65,7 @@ class design:
             #for item in self.grid:
                 #print str(item)+ "\t"+str(math.sqrt(((item[0]-self.origin[0]*1000000)**2)  +  ((item[1]-self.origin[1]*1000000)**2)  ))+"\t" +str(math.sqrt(((item[0]-self.origin[0]*1000000)**2)  +  ((item[1]-self.origin[1]*1000000)**2)  ) >= (self.mask[0]*1000000))
                 #if (math.sqrt(((X[0]-self.origin[0]*1000000)**2)  +  ((X[1]-self.origin[1]*1000000)**2)  ) > (self.mask[0]*1000000)):
-            self.grid[:] = [x for x in self.grid if (math.sqrt(((x[0]-self.origin[0]*1000000)**2)  +  ((x[1]-self.origin[1]*1000000)**2)  ) <= (self.mask[0]*1000000))]
-            for item in self.grid:
-                if self.grid.count(item)>1:
-                    print "xyz"
+            self.grid[:] = [x for x in self.grid if (math.sqrt(((x[0]-self.origin[0]*1000000)**2)  +  ((x[1]-self.origin[1]*1000000)**2)  ) <= (self.masking[0]*1000000))]
             self.exposure_points.extend(self.grid)
             #print self.exposure_points
 
@@ -90,15 +87,8 @@ class design:
         exposurefile.close()
 
 
-    def circle(self,r,n):
-        circle = mpatches.Circle(grid[0], 0.1, ec="none")
-        patches.append(circle)
-        label(grid[0], "Circle")
-        # r=r*1000000
-        # perimeter=[(math.cos(2*math.pi/n*x)*r+self.origin[0],math.sin(2*math.pi/n*x)*r+self.origin[1]) for x in xrange(0,(n*2))]
-        # self.exposure_points.extend(perimeter)
-        # for item in perimeter:
-        #     print str(item)
+    def mask_size(self,s):
+        self.mask=s
 
 
     def disc(self,r,n):
@@ -114,21 +104,27 @@ class design:
         fig = plt.figure(2)
         fig.canvas.set_window_title('Preview Window')
         plt.figure(2)
-        """if self.mask:
-            plt.plot([self.mask[0]+self.origin[0],self.mask[0]+self.origin[0]],[self.mask[2]+self.origin[1],self.mask[3]+self.origin[1]], 'black')
-            plt.plot([self.mask[0]+self.origin[0],self.mask[1]+self.origin[0]],[self.mask[3]+self.origin[1],self.mask[3]+self.origin[1]], 'black')
-            plt.plot([self.mask[1]+self.origin[0],self.mask[1]+self.origin[0]],[self.mask[3]+self.origin[1],self.mask[2]+self.origin[1]], 'black')
-            plt.plot([self.mask[1]+self.origin[0],self.mask[0]+self.origin[0]],[self.mask[2]+self.origin[1],self.mask[2]+self.origin[1]], 'black')"""
+        plt.plot([-50,-50],[60,-60], 'red')
+        plt.plot([-50,50],[-60,-60], 'red')
+        plt.plot([50,50],[-60,60], 'red')
+        plt.plot([50,-50],[60,60], 'red')
 
         xdata,ydata=[],[]
         #print self.exposure_points
         for item in self.exposure_points:
-            xdata.append(item[0]/float(1000000))
-            ydata.append(item[1]/float(1000000))
+            item=[item[0]/float(1000000), item[1]/float(1000000)]
+            if self.wafer:
+                plt.plot([item[0]-self.mask/2,item[0]+self.mask/2],[item[1]-self.mask/2,item[1]-self.mask/2], 'black')
+                plt.plot([item[0]+self.mask/2,item[0]+self.mask/2],[item[1]-self.mask/2,item[1]+self.mask/2], 'black')
+                plt.plot([item[0]+self.mask/2,item[0]-self.mask/2],[item[1]+self.mask/2,item[1]+self.mask/2], 'black')
+                plt.plot([item[0]-self.mask/2,item[0]-self.mask/2],[item[1]+self.mask/2,item[1]-self.mask/2], 'black')
+            xdata.append(item[0])
+            ydata.append(item[1])
+        plt.hold(True)
         plt.plot(xdata,ydata,'ro',self.origin[0],self.origin[1],'bs')
         #plt.plot()
         #plt.axis()
-        plt.axis([-50, 50, -60, 60],'equal')
+        plt.axis([-70, 70, -70, 70],'equal')
         plt.grid()
         plt.show()
      
@@ -139,11 +135,11 @@ class design:
                 self.writeData()"""
     
     
-    def masking(self, x, y=None):
+    def substrate(self, x, y=None):
         if y==None:
-            self.mask=[x]
+            self.wafer=[x]
         else:
-            self.mask = [(x/2),(-x/2), (y/2),(-y/2)]
+            self.wafer = [(x/2),(-x/2), (y/2),(-y/2)]
         
     def setOrigin(self, x, y):
         self.origin = [x,y]
@@ -223,3 +219,4 @@ series.createShape()
 series.appendPoints()
 series.showPreview()
 series.writeData()"""
+
