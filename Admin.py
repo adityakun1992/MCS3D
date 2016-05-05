@@ -23,7 +23,7 @@ def isUserAdmin():
         # Check for root on Posix
         return os.getuid() == 0
     else:
-        raise RuntimeError, "Unsupported operating system for this module: %s" % (os.name,)
+        raise RuntimeError, "Unsupported operating system for this module: %s. \nWorks only on Microsoft Windows." % (os.name,)
 
 def runAsAdmin(cmdLine=None, wait=True):
 
