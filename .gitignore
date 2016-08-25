@@ -61,6 +61,11 @@ TrackStage.py
 Testseries.py
 trackintk.py
 Scripts/Pluses_smaract.py
+Scripts/rectangle4doseseries.py
+Scripts/cgrid_3_print.py
+Scripts/cgrid_3.py
 multithread.py
 digitaldaqtest.py
 test.py
+LabVIEW_Reconnect.py
+progress.p

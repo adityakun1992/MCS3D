@@ -1,4 +1,3 @@
-#from multiprocessing import Process
 from Tkinter import *
 import tkFileDialog,Tkconstants
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -7,25 +6,30 @@ import matplotlib.animation as animation
 from Control import SmarAct
 from DesignSimulation import design
 import threading
+import pickle, json
 import Admin
-from numpy import *
+import os
+import numpy as np
 import itertools
-
-if not Admin.isUserAdmin():
-        Admin.runAsAdmin()
-
+import subprocess
+"""if not Admin.isUserAdmin():
+        Admin.runAsAdmin()"""
 
 stage = SmarAct(0)
-x, y =stage.getPosition()[0], stage.getPosition()[1]
+#global p
+#x, y =stage.getPosition()[0], stage.getPosition()[1]
+#stage.generate_json(0,100,[0,0])
+p = subprocess.Popen(["python", "AtomServer.py"],stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr= subprocess.PIPE)
 
-#x, y = 0, 0
+x, y = 0, 0
 series = design()
 
 
 class Application(Frame):
     def __init__(self, master=None):
         self.fig = plt.figure(figsize=(3,2.6))
-        self.history=[]
+        self.x=0
+        self.y=0
         Frame.__init__(self, master)
         self.origin_x = 0
         self.origin_y = 0
@@ -39,7 +43,7 @@ class Application(Frame):
 
     def execute_code(self):
         text = self.T.get("1.0",END)
-
+        #text = "import numpy as np\nseries.exposure_points = []\nseries.mask(6)\nseries.setOrigin(0,-20)\nseries.substrate(38)\nseries.gengrid(7,7)\nseries.preview()\nseries.dosage=np.ones(len(series.exposure_points))*52\nseries.name('cgrid')\nseries.writeData()"
         # if not("print \"xyz\"" in text):
         #     print text
         #     exec(text)
@@ -48,10 +52,8 @@ class Application(Frame):
         #     exec(text[:move_index])
         #     t = threading.Thread(text[move_index])
         #     t.start()
-        tex=[]
-        #text = text.splitlines()
-        tex = []
-        if "stage." in text:
+        tex,endswith_preview = self.split_for_thread(text)
+        """if "stage." in text:
              tex.extend(text[:text.index('stage.')])
              self.move_command = text[text.index('stage.'):]
              tex=''.join(tex)
@@ -60,7 +62,39 @@ class Application(Frame):
              t = threading.Thread(target = self.printSeries)
              t.start()
         else:
-            exec(text)
+            exec(text)"""
+        for i in range(len(tex)):
+            self.text_to_execute = tex[i]
+            t = threading.Thread(target = self.execute_newthread)
+            t.start()
+            if i != 0:
+                t.join()
+            if i<len(tex)-1 and len(tex)>1:
+                series.preview()
+        if endswith_preview:
+            series.preview()
+
+    def split_for_thread(self,text):
+        tex = list()
+        #matplotlib should rn in main thread - side threads not not allowed dring plotting
+        if "series.preview()" in text:
+            tex.append(text[:text.index('series.preview()')])
+            tex.append(text[(text.index('series.preview()')+16):])
+            while "series.preview()" in tex[-1]:
+                text = tex[-1]
+                tex[-1] = ''.join(text[:text.index('series.preview()')])
+                tex.append(text[(text.index('series.preview()')+16):])
+        else:
+            tex = [''.join(text)]
+            print tex
+        if text.rstrip('\n')[-17:] == 'series.preview()':
+            endswith_preview = True
+        else:
+            endswith_preview = False
+        return tex, endswith_preview
+
+    def execute_newthread(self):
+        exec(self.text_to_execute)
 
 
     def printSeries(self):
@@ -98,11 +132,19 @@ class Application(Frame):
 
     def asksaveasfilename(self):
         #filename = tkFileDialog.asksaveasfilename(**self.file_opt)
-        f = tkFileDialog.asksaveasfile(mode='w', defaultextension=".py")
+        f = tkFileDialog.asksaveasfile(mode='w', **self.file_opt)
         text2save=str(self.T.get(0.0,END))
         f.write(text2save)
         f.close()
 
+    def print_series(self):
+        print threading.active_count()
+        stage.printSeries(series.exposure_points, series.dosage)
+
+    def bc(self):
+        self.beam_off()
+        stage.move()
+        self.beam_on()
 
     def createWidgets(self, fig):
         self.T = Text(root, height=20, width=50)
@@ -127,7 +169,7 @@ class Application(Frame):
         self.file_opt = options = {}
         options['defaultextension'] = '.py'
         options['filetypes'] = [('Python files', '.py'), ('all files', '.*')]
-        options['initialdir'] = 'C:\\'
+        options['initialdir'] = os.path.dirname(os.path.realpath(__file__)) + '\Scripts'
         options['initialfile'] = ''
         options['parent'] = root
         options['title'] = 'Select a File'
@@ -194,12 +236,25 @@ class Application(Frame):
         self.expose_on.pack()
         self.expose_on.place(x = 840, y=100, bordermode=OUTSIDE)
 
+
+
         self.expose_off = Button(root, text ="Beam Off", command = self.beam_off)
         self.expose_off.pack()
         self.expose_off.place(x = 920, y=100, bordermode=OUTSIDE)
 
-        self.QUIT = Button(root, text ="Stop", command = self.quit)
+        self.current_check = Button(root, text='Check Beam Current', command=self.bc)
+        self.current_check.pack()
+        self.current_check.place(x = 840, y=150, bordermode=OUTSIDE)
+        self.ps = Button(root, text='Print Series', command=self.print_series)
+        self.ps.pack()
+        self.ps.place(x = 840, y=200, bordermode=OUTSIDE)
+
+        self.QUIT = Button(root, text ="Stop", command = self.kill)
         self.QUIT.place(x = 20, y=390, bordermode=OUTSIDE)
+
+    def kill(self):
+        p.kill()
+        self.quit()
 
 
     def updateCurrent(self, x, y):
@@ -228,9 +283,7 @@ class Application(Frame):
                     del history
                     stage.reconnect()"""
             self.x, self.y = stage.getPosition()[0], stage.getPosition()[1]
-            #print self.x,self.y
-            #self.x, self.y = stage.getPosition()[0], stage.getPosition()[1]
-            #x, y = 0, 0
+            #self.x, self.y = self.x+series.small_num, self.y+series.small_num
             self.updateCurrent(self.x, self.y)
             self.scat.set_offsets(([self.x/1000000,self.y/1000000]))
             return self.scat,2
@@ -245,9 +298,23 @@ class Application(Frame):
             self.ax.set_xlim(-50, 50)
             self.line, = self.ax.plot([], [], lw=1)
             self.scat=plt.scatter(x, y, c=x)
+            self.x, self.y =0,0
         self.anim=animation.FuncAnimation(self.fig, self._update_plot, frames=100, interval=100)
 
+    def __del__(self):
+        p.kill()
 
+
+def pickling():
+    """if stage.jsonobj != None:
+        pickleobj = pickle.dump(stage.jsonobj)
+    else:"""
+    data = json.dumps({"current_percentage": 0, "current_point": 0, "noofpoints": 0, "point": [0,0], "msg": "Intialized, Not running"})
+    s = pickle.dump( data, open( "progress.p", "wb" ) )
+    #p = subprocess.Popen(["python", "AtomServer.py"],stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr= subprocess.PIPE)
+pickling()
+#p.kill()
+#p = subprocess.Popen(["python", "AtomServer.py"],stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr= subprocess.PIPE)
 #xdata=[]
 #ydata=[]
 root = Tk()

@@ -1,7 +1,10 @@
 from Config import *
 import time
-from PyDAQmx import *
+#from PyDAQmx import *
 from subprocess import Popen
+import datetime
+import json
+#import objecttohttp
 
 def ExitIfError(st):
     if st != SA_OK:
@@ -12,11 +15,13 @@ def ExitIfError(st):
 
 class SmarAct:
     def __init__(self, config):
+        self.jsonobj = None
         self.mcsHandle = SA_INDEX()
         self.x = c_int()
         self.y = c_int()
         self.statusy=c_uint()
         self.statusx=c_uint()
+        self.msg = "Intitialized"
 
 
         self.reconnecting = False
@@ -32,7 +37,7 @@ class SmarAct:
         #print MCSlib.SA_GetPosition_S(self.mcsHandle,0,byref(self.y))
         ExitIfError(MCSlib.SA_InitSystems(config))
         #initialize the NI-DAQmx
-        try:
+        """try:
             self.taskHandle = TaskHandle()
             self.write = int32()
             self.writedata = (numpy.ones((1000,), dtype=numpy.uint8))
@@ -64,15 +69,22 @@ class SmarAct:
             pass
             #print "DAQmx Error: %s"%err
 
-        #MCSlib.SA_ReleaseSystems(byref(buffsize))
+        #MCSlib.SA_ReleaseSystems(byref(buffsize))"""
     def initialize(self):
         ExitIfError(MCSlib.SA_InitSystems(self.config))
 
     def reconnect(self):
+        self.tries += 1
         self.reconnecting = True
+        self.lost_time = datetime.datetime.now().time()
+        self.msg = "Lost connection to stage at" + current_time
         p = Popen("restartcom.bat")
         time.sleep(5)
-        ExitIfError(MCSlib.SA_InitSystems(self.config))
+        if MCSlib.SA_InitSystems(self.config) == SA_OK:
+            self.msg = "Lost connection to stage at " + self.lost_time + " and regained connection"
+            self.tries = 0
+        else:
+            self.msg = "Lost connection to stage at " + self.lost_time + " \n Tries: " + str(self.tries)
         time.sleep(5)
 
     def __str__(self):
@@ -120,28 +132,6 @@ class SmarAct:
         return [self.x.value, self.y.value]
 
 
-    """def tracking(self):
-        def data_gen():
-            while True:
-                yield self.getPosition()[0]/1000000, self.getPosition()[1]/1000000
-        fig, ax = plt.subplots()
-        line, = ax.plot([], [], lw=2)
-        ax.set_ylim(-60, 60)
-        ax.set_xlim(-50, 50)
-        ax.grid()
-        xdata, ydata = [], []
-        def run(data):
-            # update the data
-            xpos,ypos = data
-            xdata.append(xpos)
-            ydata.append(ypos)
-            xmin, xmax = ax.get_xlim()
-            line.set_data(xdata, ydata)
-            return line,
-        ani = animation.FuncAnimation(fig, run, data_gen, blit=True, interval=2,
-                                      repeat=False)
-        plt.show()"""
-
     def moveRelative(self, xpos, ypos):
         self.dx, self.dy = self.dx+xpos, self.dy+ypos
         #self.moving = 1
@@ -173,6 +163,7 @@ class SmarAct:
 
     def move(self, xpos=-6500000, ypos=44000000):
         #if self.getStatus()
+        print xpos,ypos
         reached =0
         while True:
             try:
@@ -195,7 +186,6 @@ class SmarAct:
             except:
                 #a disconnect has occured-need to reset USB
                 self.reconnect()
-        print "done"
         self.statusx.value=self.statusy.value=0
         self.dx, self.dy = xpos, ypos
 
@@ -213,7 +203,7 @@ class SmarAct:
 
 
     #not using flexure ---- shutter connected to analog
-    def expose_manual(self,t):
+    def expose_auto(self, t):
         try:
             #self.wait()
             DAQmxWriteAnalogF64(self.taskHandle_x, 1000, 20, 10.0, 20, self.writedata*0, byref(self.write), None)
@@ -254,13 +244,17 @@ class SmarAct:
 
     def printSeries(self,series,dosage):
         i=0
+        current_point = 0
+        max_points = len(series)
         for item in series:
             print "Now moving to :" + " " + str(item)
+            self.msg = "Functioning Smoothly"
+            current_point += 1
+            self.generate_json(current_point,max_points,[item[0]/1000000,item[1]/1000000])
             self.move(item[0],item[1])
             print "Reached"
-            #self.wait()
             print "Exposing for " + str(dosage[i]) + " seconds"
-            self.expose_manual(dosage[i])
+            self.expose_auto(dosage[i])
             i+=1
             """for point in series:
                 self.flex_move(point[0], point[1])
@@ -276,6 +270,12 @@ class SmarAct:
                 i -= 1
             i += 1"""
 
+    def generate_json(self,current_point, max_points, point):
+        percentage = 0
+        self.jsonobj = json.dumps({"current_percentage": percentage, "current_point": current_point, "noofpoints": max_points, "point": point, "msg": self.msg})
+        #objecttohttp.pickling()
+
+
     def release(self):
         buffsize=c_int(10)
         MCSlib.SA_ReleaseSystems(byref(buffsize))
@@ -284,9 +284,9 @@ class SmarAct:
         buffsize=c_int(10)
         MCSlib.SA_ReleaseSystems(byref(buffsize))
         # DAQmx Stop Cod
-        DAQmxStopTask(self.taskHandle)
+        """DAQmxStopTask(self.taskHandle)
         DAQmxClearTask(self.taskHandle)
         DAQmxStopTask(self.taskHandle_x)
         DAQmxClearTask(self.taskHandle_x)
         DAQmxStopTask(self.taskHandle_y)
-        DAQmxClearTask(self.taskHandle_y)
+        DAQmxClearTask(self.taskHandle_y)"""
