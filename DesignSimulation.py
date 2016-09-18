@@ -17,7 +17,7 @@ class design:
         self.origin = [0,0]
         self.mask_size=None
         self.small_num = math.pow(10,-6)
-        print self.small_num
+        #print self.small_num
 
     def name(self, name):
         self.name = name
@@ -33,9 +33,9 @@ class design:
         else:
             self.exists = False
 
-    def gengrid(self,pitch_x,pitch_y):
+    def gengrid(self,pitch_x,pitch_y, scale = 1000000):
         grid=[]
-        s=1000000       #scale
+        s=scale       #scale
         #smallnum to include the end point(in arange) but not add any more points
         small_num = math.pow(10,-10)
 
@@ -47,7 +47,7 @@ class design:
             #sort to make prints with short movements
             x=np.sort(x,kind='quicksort')
             y=np.sort(y,kind='quicksort')
-            print x,y
+            #print x,y
             for i in x:
                 for j in y:
                     grid.append([int(i),int(j)])
@@ -59,20 +59,20 @@ class design:
             y=np.append(np.arange(0-pitch_y,-60-small_num,-pitch_y)*s,y)
             x=np.sort(x,kind='quicksort')
             y=np.sort(y,kind='quicksort')
-            print x,y
+            #print x,y
             for i in x:
                 for j in y:
                     grid.append([i,j])
             #eliminate extra points and confine within radius-distance formula
             grid[:] = [x for x in grid if (math.sqrt(((x[0])**2)  +  ((x[1])**2)  ) <= (self.wafer[0]*1000000))]
-        print grid
+        #print grid
 
 
         if self.origin != [0,0]:
             for i in range(len(grid)):
                 grid[i]=[grid[i][0]+(self.origin[0]*s),grid[i][1]+(self.origin[1]*s)]
         self.exposure_points.extend(grid)
-        print self.exposure_points
+        #print self.exposure_points
     """def gengrid(self, pitch_x, pitch_y):
         grid = []
         unique=[]
@@ -137,15 +137,6 @@ class design:
 
     def mask(self,s):
         self.mask_size=s*1.0
-
-
-    def disc(self,r,n):
-        r=r*1000000
-        perimeter=[(math.cos(2*math.pi/n*x)*r+self.origin[0],math.sin(2*math.pi/n*x)*r+self.origin[1]) for x in xrange(0,(n*2))]
-        self.exposure_points.extend(perimeter)
-        for item in perimeter:
-            print str(item)
-
 
 
     def preview(self):

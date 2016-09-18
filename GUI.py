@@ -19,7 +19,7 @@ stage = SmarAct(0)
 #global p
 #x, y =stage.getPosition()[0], stage.getPosition()[1]
 #stage.generate_json(0,100,[0,0])
-p = subprocess.Popen(["python", "AtomServer.py"],stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr= subprocess.PIPE)
+p = subprocess.Popen(["python", "AtomServer.py"])
 
 x, y = 0, 0
 series = design()
@@ -53,7 +53,7 @@ class Application(Frame):
         #     t = threading.Thread(text[move_index])
         #     t.start()
         tex,endswith_preview = self.split_for_thread(text)
-        """if "stage." in text:
+        if "stage." in text:
              tex.extend(text[:text.index('stage.')])
              self.move_command = text[text.index('stage.'):]
              tex=''.join(tex)
@@ -62,8 +62,8 @@ class Application(Frame):
              t = threading.Thread(target = self.printSeries)
              t.start()
         else:
-            exec(text)"""
-        for i in range(len(tex)):
+            exec(text)
+        """for i in range(len(tex)):
             self.text_to_execute = tex[i]
             t = threading.Thread(target = self.execute_newthread)
             t.start()
@@ -72,7 +72,7 @@ class Application(Frame):
             if i<len(tex)-1 and len(tex)>1:
                 series.preview()
         if endswith_preview:
-            series.preview()
+            series.preview()"""
 
     def split_for_thread(self,text):
         tex = list()
