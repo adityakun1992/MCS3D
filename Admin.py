@@ -41,7 +41,6 @@ def runAsAdmin(cmdLine=None, wait=True):
     elif type(cmdLine) not in (types.TupleType,types.ListType):
         raise ValueError, "cmdLine is not a sequence."
     cmd = '"%s"' % (cmdLine[0],)
-    # XXX TODO: isn't there a function or something we can call to massage command line params?
     params = " ".join(['"%s"' % (x,) for x in cmdLine[1:]])
     cmdDir = ''
     showCmd = win32con.SW_SHOWNORMAL

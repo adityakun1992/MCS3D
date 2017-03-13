@@ -4,6 +4,8 @@ import time
 from subprocess import Popen
 import datetime
 import json
+import pickle
+import numpy as np
 #import objecttohttp
 
 def ExitIfError(st):
@@ -70,21 +72,26 @@ class SmarAct:
             #print "DAQmx Error: %s"%err
 
         #MCSlib.SA_ReleaseSystems(byref(buffsize))"""
-    def initialize(self):
+
+    def initializeStage(self):
         ExitIfError(MCSlib.SA_InitSystems(self.config))
 
     def reconnect(self):
-        self.tries += 1
         self.reconnecting = True
-        self.lost_time = datetime.datetime.now().time()
-        self.msg = "Lost connection to stage at" + current_time
+        if self.tries==0:
+            self.lost_time = str(datetime.datetime.now().time())
+            self.msg = "Lost connection to stage at " + self.lost_time
+        self.tries += 1
+        self.generate_json()
         p = Popen("restartcom.bat")
         time.sleep(5)
         if MCSlib.SA_InitSystems(self.config) == SA_OK:
             self.msg = "Lost connection to stage at " + self.lost_time + " and regained connection"
             self.tries = 0
+            self.generate_json()
         else:
             self.msg = "Lost connection to stage at " + self.lost_time + " \n Tries: " + str(self.tries)
+            self.generate_json()
         time.sleep(5)
 
     def __str__(self):
@@ -104,7 +111,7 @@ class SmarAct:
         MCSlib.SA_GetStatus_S(self.mcsHandle,1,byref(self.statusx))
         #print self.statusx.value, self.statusy.value
         return [self.statusx.value, self.statusy.value]
-    
+
     def wait(self):
         history=[]
         while True:
@@ -116,7 +123,7 @@ class SmarAct:
                 if ((not history or [history[0]]*len(history) == history)):
                     del history
                     self.reconnect()
-                    break    
+                    break
                 history=[]
             if self.statusx.value == 3 and self.statusy.value == 3:
                 print "reached"
@@ -244,36 +251,36 @@ class SmarAct:
 
     def printSeries(self,series,dosage):
         i=0
-        current_point = 0
-        max_points = len(series)
+        self.tries = 0
+        self.current_point = 0
+        self.max_points = len(series)
         for item in series:
             print "Now moving to :" + " " + str(item)
-            self.msg = "Functioning Smoothly"
-            current_point += 1
-            self.generate_json(current_point,max_points,[item[0]/1000000,item[1]/1000000])
+            self.msg = "Print process is in operation. There are no issues currently."
+            self.point = [item[0]/1000000,item[1]/1000000]
+            self.percentage = (self.current_point/len(series))*100
+            self.current_point += 1
+            self.generate_json()
             self.move(item[0],item[1])
             print "Reached"
             print "Exposing for " + str(dosage[i]) + " seconds"
             self.expose_auto(dosage[i])
             i+=1
-            """for point in series:
-                self.flex_move(point[0], point[1])
-                self.wait()
-                self.expose_manual(dosage)
-        n=len(series)
-        i=0
-        while i<n:
-            if not(4 in self.getStatus()):
-                time.sleep(dosage)
-                self.move(int(series[i][0]),int(series[i][1]))
-            else:
-                i -= 1
-            i += 1"""
+            done = np.array(np.array(series.exposure_points[:self.current_point])/1000000)
+            yet = np.array(np.array(series.exposure_points[self.current_point:])/1000000)
+            self.generatePoint_json(done, yet)
 
-    def generate_json(self,current_point, max_points, point):
-        percentage = 0
-        self.jsonobj = json.dumps({"current_percentage": percentage, "current_point": current_point, "noofpoints": max_points, "point": point, "msg": self.msg})
-        #objecttohttp.pickling()
+        self.msg = "Process Completed"
+        self.generate_json()
+
+
+    def generate_json(self):
+        self.jsonobj = json.dumps({"current_percentage": self.percentage, "current_point": self.current_point, "noofpoints": self.max_points, "point": self.point, "msg": self.msg})
+        s = pickle.dump( self.jsonobj, open( "progress.p", "wb" ) )
+
+    def generatePoint_json(done, yet):
+        jsonpoints = json.dumps({"done": done.tolist(), "yet":yet.tolist()})
+        s = pickle.dump( jsonpoints, open( "points.p", "wb" ) )
 
 
     def release(self):

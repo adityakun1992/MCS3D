@@ -12,11 +12,10 @@ import os
 import numpy as np
 import itertools
 import subprocess
-"""if not Admin.isUserAdmin():
-        Admin.runAsAdmin()"""
+if not Admin.isUserAdmin():
+        Admin.runAsAdmin()
 
 stage = SmarAct(0)
-#global p
 #x, y =stage.getPosition()[0], stage.getPosition()[1]
 #stage.generate_json(0,100,[0,0])
 p = subprocess.Popen(["python", "AtomServer.py"])
@@ -43,6 +42,24 @@ class Application(Frame):
 
     def execute_code(self):
         text = self.T.get("1.0",END)
+        tex = []
+        if "stage." in text:
+            tex.extend(text[:text.index('stage.')])
+            self.move_command = text[text.index('stage.'):]
+            tex=''.join(tex)
+            print tex
+            exec(tex)
+            t = threading.Thread(target = self.printSeries)
+            t.start()
+        else:
+            exec(text)
+
+    """
+        #######################################################################################################
+        #Attempts to a neat execution of threads without restrictions on numberor location of preview commands#
+        #######################################################################################################
+    def execute_code(self):
+        text = self.T.get("1.0",END)
         #text = "import numpy as np\nseries.exposure_points = []\nseries.mask(6)\nseries.setOrigin(0,-20)\nseries.substrate(38)\nseries.gengrid(7,7)\nseries.preview()\nseries.dosage=np.ones(len(series.exposure_points))*52\nseries.name('cgrid')\nseries.writeData()"
         # if not("print \"xyz\"" in text):
         #     print text
@@ -63,7 +80,8 @@ class Application(Frame):
              t.start()
         else:
             exec(text)
-        """for i in range(len(tex)):
+
+        for i in range(len(tex)):
             self.text_to_execute = tex[i]
             t = threading.Thread(target = self.execute_newthread)
             t.start()
@@ -72,7 +90,7 @@ class Application(Frame):
             if i<len(tex)-1 and len(tex)>1:
                 series.preview()
         if endswith_preview:
-            series.preview()"""
+            series.preview()
 
     def split_for_thread(self,text):
         tex = list()
@@ -93,8 +111,14 @@ class Application(Frame):
             endswith_preview = False
         return tex, endswith_preview
 
+
     def execute_newthread(self):
         exec(self.text_to_execute)
+
+
+    #########################################################
+    #Attempts to a neat execution - Ends Here, Not Commplete#
+    #########################################################  """
 
 
     def printSeries(self):
