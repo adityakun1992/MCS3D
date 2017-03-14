@@ -11,8 +11,8 @@ import math
 class design:
     def __init__(self):
         self.file_path=os.path.dirname(os.path.realpath(__file__)) + '/ExposureFiles/'
-        self.exposure_points=[]
-        self.dosage=[]
+        self.exposure_points=list()
+        self.dosage=list()
         self.exists = False
         self.origin = [0,0]
         self.mask_size=None

@@ -38,6 +38,14 @@ class SmarAct:
         self.moving = 0
         #print MCSlib.SA_GetPosition_S(self.mcsHandle,0,byref(self.y))
         ExitIfError(MCSlib.SA_InitSystems(config))
+
+        self.tries = 0
+        self.current_point = 0
+        self.point = 0
+        self.percentage = 0
+        self.msg = 0
+
+
         #initialize the NI-DAQmx
         """try:
             self.taskHandle = TaskHandle()
@@ -253,32 +261,34 @@ class SmarAct:
         i=0
         self.tries = 0
         self.current_point = 0
+        self.point = [series[0]]
+        self.percentage = 0
         self.max_points = len(series)
         for item in series:
             print "Now moving to :" + " " + str(item)
             self.msg = "Print process is in operation. There are no issues currently."
             self.point = [item[0]/1000000,item[1]/1000000]
             self.percentage = (self.current_point/len(series))*100
-            self.current_point += 1
+            done = np.array(np.array(series[:self.current_point])/1000000)
+            yet = np.array(np.array(series[self.current_point:])/1000000)
             self.generate_json()
+            self.generatePoint_json(done, yet)
             self.move(item[0],item[1])
             print "Reached"
             print "Exposing for " + str(dosage[i]) + " seconds"
             self.expose_auto(dosage[i])
+            self.current_point += 1
             i+=1
-            done = np.array(np.array(series.exposure_points[:self.current_point])/1000000)
-            yet = np.array(np.array(series.exposure_points[self.current_point:])/1000000)
-            self.generatePoint_json(done, yet)
-
         self.msg = "Process Completed"
         self.generate_json()
+        self.generatePoint_json(done, yet)
 
 
     def generate_json(self):
         self.jsonobj = json.dumps({"current_percentage": self.percentage, "current_point": self.current_point, "noofpoints": self.max_points, "point": self.point, "msg": self.msg})
-        s = pickle.dump( self.jsonobj, open( "progress.p", "wb" ) )
+        s = pickle.dump(self.jsonobj, open( "progress.p", "wb" ) )
 
-    def generatePoint_json(done, yet):
+    def generatePoint_json(self, done, yet):
         jsonpoints = json.dumps({"done": done.tolist(), "yet":yet.tolist()})
         s = pickle.dump( jsonpoints, open( "points.p", "wb" ) )
 

@@ -123,8 +123,6 @@ class Application(Frame):
 
     def printSeries(self):
         exec(self.move_command)
-            #self.expose(dosage)
-        #self.tracking(series1,dosage)
 
     def askopenfilename(self):
         filename = tkFileDialog.askopenfilename(**self.file_opt)
@@ -162,13 +160,25 @@ class Application(Frame):
         f.close()
 
     def print_series(self):
-        print threading.active_count()
-        stage.printSeries(series.exposure_points, series.dosage)
+        if len(series.exposure_points) == 0 or len(series.dosage) == 0 or len(series.exposure_points) == len(series.dosage):
+            print "Error in print data. Please verify."
+        elif threading.active_count()>1:
+                print "Another thread is controlling the stage. Please wait till the command has finished execution or restart the program."
+        else:
+            t=threading.Thread(target = stage.printSeries, args=(series.exposure_points,series.dosage))
+            t.start()
 
     def bc(self):
-        self.beam_off()
-        stage.move()
-        self.beam_on()
+        def check_beamcurrent():
+            print "Check Beam Current"
+            self.beam_off()
+            stage.move()
+            self.beam_on()
+        t = threading.Thread(target = check_beamcurrent)
+        if threading.active_count > 1:
+            print "Cannot perform stage operations while print process is going on. Will allow to check beam current after the end of the process."
+        else:
+            t.start()
 
     def createWidgets(self, fig):
         self.T = Text(root, height=20, width=50)
