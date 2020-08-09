@@ -1,5 +1,6 @@
 # MCS3D
-This is a software package to serve scientists in the Nanostructures Laboratory at the University of Houston, to assist in printing patterns for Lithography.
+This is a repository containing my (Aditya Kundety) thesis source code.
+This is a software package to serve scientists in the Nanostructures Laboratory at the University of Houston, to assist in printing patterns for Lithography. 
 
 It provides a Scripting environment to design and visualize the patterns. With built in drivers to control the scanner and shutter hardware, software enables the user to automatically print the design.
 
